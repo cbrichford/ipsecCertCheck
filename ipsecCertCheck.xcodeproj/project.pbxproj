@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		814B55A71BB9B139007120E6 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 814B55A61BB9B139007120E6 /* main.cpp */; };
+		814B55B01BB9C0FB007120E6 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 814B55AE1BB9C0FB007120E6 /* CoreFoundation.framework */; };
+		814B55B11BB9C0FB007120E6 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 814B55AF1BB9C0FB007120E6 /* Security.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -25,6 +27,8 @@
 /* Begin PBXFileReference section */
 		814B55A31BB9B139007120E6 /* ipsecCertCheck */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ipsecCertCheck; sourceTree = BUILT_PRODUCTS_DIR; };
 		814B55A61BB9B139007120E6 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		814B55AE1BB9C0FB007120E6 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
+		814B55AF1BB9C0FB007120E6 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +36,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				814B55B01BB9C0FB007120E6 /* CoreFoundation.framework in Frameworks */,
+				814B55B11BB9C0FB007120E6 /* Security.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -43,6 +49,7 @@
 			children = (
 				814B55A51BB9B139007120E6 /* ipsecCertCheck */,
 				814B55A41BB9B139007120E6 /* Products */,
+				814B55AD1BB9C055007120E6 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -60,6 +67,15 @@
 				814B55A61BB9B139007120E6 /* main.cpp */,
 			);
 			path = ipsecCertCheck;
+			sourceTree = "<group>";
+		};
+		814B55AD1BB9C055007120E6 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				814B55AE1BB9C0FB007120E6 /* CoreFoundation.framework */,
+				814B55AF1BB9C0FB007120E6 /* Security.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
