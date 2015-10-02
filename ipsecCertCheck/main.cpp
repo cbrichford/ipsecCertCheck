@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <stdexcept>
+#include <vector>
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <Security/Security.h>
@@ -80,51 +81,151 @@ private:
 };
 
 
-SecCertificateRef parseCertificate(const MMappedData& data)
+template <class t_CFRef> class CFRef
 {
-    CFDataRef const cfData = CFDataCreateWithBytesNoCopy(0, data.start(), data.size(), kCFAllocatorNull);
+public:
+    
+    
+    
+    CFRef()
+    : m_cfRef(0)
+    {
+    }
+    
+    CFRef(const CFRef<t_CFRef> &other)
+    : m_cfRef(other.m_cfRef)
+    {
+        if (m_cfRef)
+            CFRetain(m_cfRef);
+    }
+    
+    CFRef(CFRef<t_CFRef> &&other)
+    : m_cfRef(other.m_cfRef)
+    {
+        other.m_cfRef = 0;
+    }
+    
+    
+    ~CFRef()
+    {
+        if (m_cfRef)
+            CFRelease(m_cfRef);
+    }
+    
+    operator t_CFRef() const
+    {
+        return m_cfRef;
+    }
+    
+    template <typename... t_Args, typename t_F>
+    static CFRef<t_CFRef> create(t_F f, t_Args... args)
+    {
+        return CFRef(f(args...));
+    }
+    
+    template <typename t_Return, typename... t_Args, typename t_F>
+    static std::pair<t_Return, CFRef<t_CFRef>> createWithLastOutParam(t_F f, t_Args... args)
+    {
+        t_CFRef result = 0;
+        t_Return ret = f(args..., &result);
+        return std::pair<t_Return, CFRef<t_CFRef> >(ret, CFRef(result));
+    }
+    
+    
+    CFRef<t_CFRef>& operator=(const CFRef<t_CFRef>& other)
+    {
+        if (m_cfRef)
+            CFRelease(m_cfRef);
+        m_cfRef = other.m_cfRef;
+        if (m_cfRef)
+            CFRetain(m_cfRef);
+        return *this;
+    }
+    
+    operator bool() const
+    {
+        return m_cfRef;
+    }
+    
+private:
+    
+    CFRef(t_CFRef cfRef)
+    : m_cfRef(cfRef)
+    {
+    }
+    
+    t_CFRef m_cfRef;
+};
+
+
+
+
+CFRef<SecCertificateRef> parseCertificate(const MMappedData& data)
+{
+    CFRef<CFDataRef> const cfData =
+        CFRef<CFDataRef>::create(CFDataCreateWithBytesNoCopy,
+                                 kCFAllocatorDefault,
+                                 data.start(),
+                                 data.size(),
+                                 kCFAllocatorNull);
     if (!cfData) {
         throw std::runtime_error("Failed to allocate CFData!");
     }
     
-    SecCertificateRef const cert = SecCertificateCreateWithData(0, cfData);
-    CFRelease(cfData);
-    return cert;
+    return CFRef<SecCertificateRef>::create(SecCertificateCreateWithData,
+                                            kCFAllocatorDefault,
+                                            cfData);
 }
 
-static SecPolicyRef createCERTPolicy(const char* hostname)
+static CFRef<SecPolicyRef> createCERTPolicy(const char* hostname)
 {
     size_t hostnameLen = strlen(hostname);
-    CFStringRef hostnameStrRef = CFStringCreateWithBytes(kCFAllocatorDefault,
-                                                         reinterpret_cast<const uint8_t*>(hostname),
-                                                         hostnameLen,
-                                                         kCFStringEncodingUTF8,
-                                                         false);
+    CFRef<CFStringRef> const hostnameStrRef =
+        CFRef<CFStringRef>::create(CFStringCreateWithBytes,
+                                   kCFAllocatorDefault,
+                                   reinterpret_cast<const uint8_t*>(hostname),
+                                   hostnameLen,
+                                   kCFStringEncodingUTF8,
+                                   false);
     
     const void			*key[] = { kSecPolicyName };
     const void			*value[] = { hostnameStrRef };
     
-    CFDictionaryRef const properties = CFDictionaryCreate(NULL, key, value, 1, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    CFRef<CFDictionaryRef> const properties = CFRef<CFDictionaryRef>::create(CFDictionaryCreate,
+                                                                             kCFAllocatorDefault,
+                                                                             key,
+                                                                             value,
+                                                                             1,
+                                                                             &kCFTypeDictionaryKeyCallBacks,
+                                                                             &kCFTypeDictionaryValueCallBacks);
     if (!properties) {
         throw std::runtime_error("Unable to create CF dictionary!!!");
     }
     
-    SecPolicyRef const policyRef = SecPolicyCreateWithProperties(kSecPolicyAppleIPsec, properties);
-    CFRelease(properties);
-    return policyRef;
+    return CFRef<SecPolicyRef>::create(SecPolicyCreateWithProperties, kSecPolicyAppleIPsec, properties);
 }
 
-static CFArrayRef createCERTChain(const MMappedData& leafCERTBytes,
-                                  const MMappedData& intCERTBytes,
-                                  const MMappedData& caCERTBytes)
+static CFRef<CFArrayRef> createCERTChain(const std::vector<MMappedData>& certsBytes)
 {
-    SecCertificateRef certs[] = {
-        parseCertificate(leafCERTBytes),
-        parseCertificate(intCERTBytes),
-        parseCertificate(caCERTBytes)
-    };
+    std::vector<CFRef<SecCertificateRef>> certs;
+    for (auto i = certsBytes.begin(); i != certsBytes.end(); ++i)
+    {
+        certs.emplace_back(parseCertificate(*i));
+    }
     
-    CFArrayRef chain = CFArrayCreate(kCFAllocatorDefault, (const void**)&(certs[0]), 3, &kCFTypeArrayCallBacks);
+    std::vector<SecCertificateRef> rawCertRefs;
+    for (auto i = certs.begin(); i != certs.end(); ++i)
+    {
+        rawCertRefs.emplace_back(*i);
+    }
+
+    
+    CFRef<CFArrayRef> chain =
+        CFRef<CFArrayRef>::create(CFArrayCreate,
+                                  kCFAllocatorDefault,
+                                  (const void**)rawCertRefs.data(),
+                                  rawCertRefs.size(),
+                                  &kCFTypeArrayCallBacks);
     return chain;
 }
 
@@ -138,17 +239,19 @@ inline std::string toStdString(CFStringRef s) {
     return std::string(CFStringGetCStringPtr(s,kCFStringEncodingUTF8));
 }
 
-void EvaluateCERTChain(CFArrayRef certChain, SecPolicyRef policyRef)
+void EvaluateCERTChain(const CFRef<CFArrayRef>& certChain, const CFRef<SecPolicyRef>& policyRef)
 {
-    SecTrustRef trustRef = 0;
+    std::pair<OSStatus, CFRef<SecTrustRef>> trustCreate =
+        CFRef<SecTrustRef>::createWithLastOutParam<OSStatus>(SecTrustCreateWithCertificates,
+                                                             certChain,
+                                                             policyRef);
     
-    OSStatus const trustCreate = SecTrustCreateWithCertificates(certChain, policyRef, &trustRef);
-    if (trustCreate != noErr) {
+    if (trustCreate.first != noErr) {
         throw std::runtime_error("Failed to create SecTrust!");
     }
     
     SecTrustResultType evalResult;
-    OSStatus const trustEval = SecTrustEvaluate(trustRef, &evalResult);
+    OSStatus const trustEval = SecTrustEvaluate(trustCreate.second, &evalResult);
     if (trustEval != noErr) {
         throw std::runtime_error("Trust Eval failed!!!");
     }
@@ -156,7 +259,8 @@ void EvaluateCERTChain(CFArrayRef certChain, SecPolicyRef policyRef)
         return;
     }
     
-    CFArrayRef props = SecTrustCopyProperties(trustRef);
+    CFRef<CFArrayRef> const props =
+        CFRef<CFArrayRef>::create(SecTrustCopyProperties, trustCreate.second);
     
     CFIndex numDictionaries = CFArrayGetCount(props);
     for (unsigned i = 0; i < numDictionaries; ++i) {
@@ -176,31 +280,30 @@ void EvaluateCERTChain(CFArrayRef certChain, SecPolicyRef policyRef)
     
     
     
-    CFRelease(props);
-    
     throw std::runtime_error("Cert failed check!!!");
 }
 
 
 
 void usage() {
-    std::cout << "ipsecCertCheck hostname leafCert.der intCert.der caCert.der" << std::endl;
+    std::cout << "ipsecCertCheck hostname leafCert.der [[intCert.der ...] caCert.der" << std::endl;
     throw std::runtime_error("Missing argument!");
 }
 
 int main(int argc, const char * argv[]) {
     
     try {
-        if (argc < 5) {
+        if (argc < 3) {
             usage();
         }
         
-        MMappedData leafCERTBytes = MMappedData::mapFileByName(argv[2]);
-        MMappedData intCERTBytes = MMappedData::mapFileByName(argv[3]);
-        MMappedData caCERTBytes = MMappedData::mapFileByName(argv[4]);
+        std::vector<MMappedData> certBytes;
+        for (int i = 2; i < argc; ++i) {
+            certBytes.emplace_back(MMappedData::mapFileByName(argv[i]));
+        }
         
-        CFArrayRef const chain = createCERTChain(leafCERTBytes, intCERTBytes, caCERTBytes);
-        SecPolicyRef const policy = createCERTPolicy(argv[1]);
+        CFRef<CFArrayRef> const chain = createCERTChain(certBytes);
+        CFRef<SecPolicyRef> const policy = createCERTPolicy(argv[1]);
 
         EvaluateCERTChain(chain, policy);
         
