@@ -29,6 +29,8 @@
 		814B55A61BB9B139007120E6 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		814B55AE1BB9C0FB007120E6 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		814B55AF1BB9C0FB007120E6 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		8186CDFD1BBF528800EA6E5D /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE; sourceTree = "<group>"; };
+		8186CDFE1BBF52B300EA6E5D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +49,8 @@
 		814B559A1BB9B139007120E6 = {
 			isa = PBXGroup;
 			children = (
+				8186CDFD1BBF528800EA6E5D /* LICENSE */,
+				8186CDFE1BBF52B300EA6E5D /* README.md */,
 				814B55A51BB9B139007120E6 /* ipsecCertCheck */,
 				814B55A41BB9B139007120E6 /* Products */,
 				814B55AD1BB9C055007120E6 /* Frameworks */,
@@ -251,6 +255,7 @@
 				814B55AC1BB9B139007120E6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
