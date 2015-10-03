@@ -23,7 +23,7 @@ Server Address specified in connection config: 172.31.0.12
 
 To debug:
 ```
-ipsecCertCheck 172.31.0.12 vpn-server.der int-ca.der ca.der
+sudo ipsecCertCheck 172.31.0.12 vpn-server.der int-ca.der ca.der
 ```
 
 Output:
