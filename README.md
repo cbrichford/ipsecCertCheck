@@ -19,6 +19,7 @@ openssl x509 -in cert.pem -inform PEM -outform DER -out cert.der
 
 # Examples:
 Subject in VPN server's certificate: vpn-endpoint.foo.com
+
 Server Address specified in connection config: 172.31.0.12
 
 To debug:
